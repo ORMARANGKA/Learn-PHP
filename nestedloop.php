@@ -1,53 +1,84 @@
 <?php
-$tinggi = $_POST['tinggi'] ?? '';
-$error = '';
+
+$tinggi = $_POST['tinggi'] ?? 5;
+$arah = $_POST['arah'] ?? 'atas';
 $hasil = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $angka = filter_var($tinggi, FILTER_VALIDATE_INT);
 
     if ($angka === false || $angka < 1 || $angka > 20) {
-        $error = 'Masukkan angka antara 1 dan 20.';
+        $hasil = 'Masukkan angka antara 1 sampai 20.';
+    } elseif (!in_array($arah, ['atas', 'kanan', 'bawah', 'kiri'], true)) {
+        $hasil = 'Arah tidak valid.';
     } else {
-        for ($baris = 1; $baris <= $angka; $baris++) {
-            for ($spasi = 1; $spasi <= $angka - $baris; $spasi++) {
-                $hasil .= ' ';
-            }
 
-            for ($bintang = 1; $bintang <= 2 * $baris - 1; $bintang++) {
-                $hasil .= '*';
+        // Ukuran area pola
+        $ukuran = 2 * $angka - 1;
+
+        for ($baris = 0; $baris < $ukuran; $baris++) {
+            for ($kolom = 0; $kolom < $ukuran; $kolom++) {
+
+                // Koordinat relatif dari pusat
+                $x = $kolom - ($angka - 1);
+                $y = $baris - ($angka - 1);
+
+                // Rotasi pola
+                switch ($arah) {
+                    case 'atas':
+                        $u = $x;
+                        $v = -$y;
+                        break;
+
+                    case 'kanan':
+                        $u = $y;
+                        $v = $x;
+                        break;
+
+                    case 'bawah':
+                        $u = -$x;
+                        $v = $y;
+                        break;
+
+                    case 'kiri':
+                        $u = -$y;
+                        $v = -$x;
+                        break;
+                }
+
+                // Membentuk segitiga sama kaki
+                if ($v >= 0 && $v < $angka && abs($u) <= $v) {
+                    $hasil .= '*';
+                } else {
+                    $hasil .= ' ';
+                }
             }
 
             $hasil .= "\n";
         }
     }
 }
+
 ?>
-<!DOCTYPE html>
-<html lang="id">
 
-<head>
-    <meta charset="UTF-8">
-    <title>Segitiga Bintang</title>
-</head>
+<form method="POST">
 
-<body>
-    <h1>Segitiga Bintang</h1>
+    <label>Tinggi segitiga:</label>
+    <input type="number" name="tinggi" min="1" max="20" value="<?= htmlspecialchars((string) $tinggi) ?>" required>
 
-    <form method="post">
-        <label for="tinggi">Tinggi segitiga (1–20):</label>
-        <input type="number" id="tinggi" name="tinggi" min="1" max="20" required
-            value="<?= htmlspecialchars((string) $tinggi, ENT_QUOTES, 'UTF-8') ?>">
-        <button type="submit">Tampilkan</button>
-    </form>
+    <br><br>
 
-    <?php if ($error !== ''): ?>
-        <p><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
-    <?php endif; ?>
+    <label>Arah pucuk:</label>
+    <select name="arah">
+        <option value="atas" <?= $arah === 'atas' ? 'selected' : '' ?>>Atas (12)</option>
+        <option value="kanan" <?= $arah === 'kanan' ? 'selected' : '' ?>>Kanan (3)</option>
+        <option value="bawah" <?= $arah === 'bawah' ? 'selected' : '' ?>>Bawah (6)</option>
+        <option value="kiri" <?= $arah === 'kiri' ? 'selected' : '' ?>>Kiri (9)</option>
+    </select>
 
-    <?php if ($hasil !== ''): ?>
-        <pre><?= htmlspecialchars($hasil, ENT_QUOTES, 'UTF-8') ?></pre>
-    <?php endif; ?>
-</body>
+    <button type="submit">Generate</button>
 
-</html>
+</form>
+
+<pre><?= htmlspecialchars($hasil) ?></pre>
